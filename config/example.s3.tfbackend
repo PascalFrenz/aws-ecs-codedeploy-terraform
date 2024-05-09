@@ -1,0 +1,6 @@
+profile        = "<aws-account-profile>"
+bucket         = "<terraform-state-bucket>"
+region         = "<region-to-deploy-to>"
+key            = "<path_to>/terraform.tfstate"
+dynamodb_table = "<terraform-state-lock-table>"
+encrypt        = true

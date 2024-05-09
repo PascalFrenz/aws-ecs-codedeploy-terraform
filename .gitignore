@@ -1,0 +1,16 @@
+# Ignore everything by default
+*
+# Keep essential files for the project
+!.gitignore
+!README.md
+!LICENSE
+
+# Keep example configuration files
+!config
+!config/example.s3.tfbackend
+!config/example.tfvars
+
+# Keep terraform files on root level
+!*.tf
+!.terraform.lock.hcl
+
