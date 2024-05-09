@@ -1,4 +1,7 @@
 # AWS ECS Deployment with CodeDeploy
+![Static Badge](https://img.shields.io/badge/status-actively%20maintained-3ea218?logo=gitlab)
+![GitLab Issues](https://img.shields.io/gitlab/issues/open/57710266?logo=gitlab)
+![GitLab Merge Requests](https://img.shields.io/gitlab/merge-requests/open/57710266?logo=gitlab)
 
 This repository contains an example of how to configure an AWS ECS Service to be deployed using CodeDeploy in Terraform.
 
