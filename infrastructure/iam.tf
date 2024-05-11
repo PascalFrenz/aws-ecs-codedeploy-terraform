@@ -19,7 +19,11 @@ data "aws_iam_policy_document" "codedeploy_assume_role" {
 resource "aws_iam_role" "service_execution_role" {
   name                = "${local.service_name}-execution-role"
   assume_role_policy  = data.aws_iam_policy_document.service_assume_role.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+}
+
+resource "aws_iam_role_policy_attachment" "service_ecs_permissions" {
+  role       = aws_iam_role.service_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 resource "aws_iam_role_policy_attachment" "service_appconfig_permissions" {

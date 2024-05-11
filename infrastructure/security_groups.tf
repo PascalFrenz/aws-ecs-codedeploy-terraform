@@ -20,8 +20,8 @@ resource "aws_security_group_rule" "lb_ingress_http" {
 
 resource "aws_security_group_rule" "lb_egress_http" {
   type                     = "egress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = local.example_service_port
+  to_port                  = local.example_service_port
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.service.id
   description              = "Allow http traffic from the load balancer to the service"
@@ -40,8 +40,8 @@ resource "aws_security_group" "service" {
 
 resource "aws_security_group_rule" "service_ingress_http" {
   type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = local.example_service_port
+  to_port                  = local.example_service_port
   protocol                 = "tcp"
   description              = "Allow http traffic from the load balancer"
   source_security_group_id = aws_security_group.lb.id

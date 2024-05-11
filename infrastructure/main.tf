@@ -71,7 +71,7 @@ resource "aws_lb" "alb" {
 
 resource "aws_lb_target_group" "blue" {
   name                               = "${local.alb_name}-b"
-  port                               = 80
+  port                               = local.example_service_port
   protocol                           = "HTTP"
   target_type                        = "ip"
   vpc_id                             = var.vpc_id
@@ -80,8 +80,8 @@ resource "aws_lb_target_group" "blue" {
 
   health_check {
     enabled             = true
-    path                = "/"
-    port                = 80
+    path                = "/health"
+    port                = local.example_service_port
     protocol            = "HTTP"
     healthy_threshold   = 5
     unhealthy_threshold = 2
@@ -90,7 +90,7 @@ resource "aws_lb_target_group" "blue" {
 
 resource "aws_lb_target_group" "green" {
   name                               = "${local.alb_name}-g"
-  port                               = 80
+  port                               = local.example_service_port
   protocol                           = "HTTP"
   target_type                        = "ip"
   vpc_id                             = var.vpc_id
@@ -99,8 +99,8 @@ resource "aws_lb_target_group" "green" {
 
   health_check {
     enabled             = true
-    path                = "/"
-    port                = 80
+    path                = "/health"
+    port                = local.example_service_port
     protocol            = "HTTP"
     healthy_threshold   = 5
     unhealthy_threshold = 2
@@ -177,12 +177,13 @@ resource "aws_ecs_service" "service" {
 
   load_balancer {
     container_name   = "webserver"
-    container_port   = 80
+    container_port   = local.example_service_port
     target_group_arn = aws_lb_target_group.blue.arn
   }
 
   lifecycle {
     ignore_changes = [
+      task_definition, # the task definition is changed by the CodeDeploy deployment
       desired_count, # autoscaling might change the desired count, thus it is ignored here
       load_balancer  # the load balancer block is changed by the CodeDeploy deployment
     ]
@@ -208,10 +209,28 @@ resource "aws_ecs_task_definition" "service" {
       essential      = true
       image          = local.example_service_docker_image
       portMappings = [{
-        containerPort = 80
-        hostPort      = 80
+        containerPort = local.example_service_port
+        hostPort      = local.example_service_port
         protocol      = "tcp"
       }]
+      environment = [
+        {
+          name = "APPLICATION_NAME"
+          value = aws_appconfig_application.appconfig.name
+        },
+        {
+          name = "ENVIRONMENT_NAME"
+          value = aws_appconfig_environment.production.name
+        },
+        {
+          name = "CONFIG_PROFILE_NAME"
+          value = aws_appconfig_configuration_profile.health_check.name
+        },
+        {
+          name = "HEALTH_STATUS_FEATURE_FLAG"
+          value = "isHealthy"
+        }
+      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
