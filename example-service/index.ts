@@ -28,9 +28,15 @@ if (environmentName === "development") {
     Bun.serve({
         port,
         async fetch(req: Request): Promise<Response> {
-
             if (isHealthRoute(req)) {
-                const isHealthy = await fetch(featureFlagUrl).then(response => response.json()).then(isHealthy => !!isHealthy.enabled);
+                const isHealthy = await fetch(featureFlagUrl)
+                    .then(response => response.json())
+                    .then(isHealthy => {
+                        if (!!isHealthy.enabled) {
+                            console.log(`feature flag value: ${JSON.stringify(isHealthy)}`);
+                        }
+                        return !!isHealthy.enabled;
+                    });
                 return new Response(
                     isHealthy ? "OK" : "Service Unavailable",
                     { status: isHealthy ? 200 : 503 }
