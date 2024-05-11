@@ -206,7 +206,7 @@ resource "aws_ecs_task_definition" "service" {
       systemControls = []
       volumesFrom    = []
       essential      = true
-      image          = "httpd:2.4"
+      image          = local.example_service_docker_image
       portMappings = [{
         containerPort = 80
         hostPort      = 80

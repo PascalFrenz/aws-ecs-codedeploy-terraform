@@ -5,4 +5,6 @@ locals {
   alb_name         = "${var.stage}-${local.application_name}"
   codedeploy_name  = "${var.stage}-${local.application_name}"
   appconfig_name   = "${var.stage}-${local.application_name}-configuration"
+
+  example_service_docker_image = "registry.gitlab.com/pascal-frenz/oss/aws-ecs-codedeploy-terraform/webserver:1.0.0"
 }
