@@ -22,6 +22,30 @@ resource "aws_iam_role" "service_execution_role" {
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
 }
 
+resource "aws_iam_role_policy_attachment" "service_appconfig_permissions" {
+  role       = aws_iam_role.service_execution_role.name
+  policy_arn = aws_iam_policy.appconfig_permissions.arn
+}
+
+resource "aws_iam_policy" "appconfig_permissions" {
+  name        = "${local.service_name}-appconfig-permissions"
+  description = "Allows the service to read configurations from AppConfig"
+  policy      = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "appconfig:StartConfigurationSession",
+          "appconfig:GetLatestConfiguration"
+        ],
+        // todo: restrict to the appconfig app
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 data "aws_iam_policy_document" "service_assume_role" {
   statement {
     effect  = "Allow"

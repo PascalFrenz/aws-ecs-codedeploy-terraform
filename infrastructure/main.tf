@@ -199,8 +199,8 @@ resource "aws_ecs_task_definition" "service" {
   container_definitions = jsonencode([
     {
       name           = "webserver"
-      cpu            = 256
-      memory         = 512
+      cpu            = 128
+      memory         = 256
       environment    = []
       mountPoints    = []
       systemControls = []
@@ -220,6 +220,16 @@ resource "aws_ecs_task_definition" "service" {
           awslogs-stream-prefix = "ecs"
         }
       }
+    },
+    {
+      name = "appconfig-sidecar"
+      image = "public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.x"
+      essential = true
+      portMappings = [{
+        containerPort = 2772
+        hostPort = 2772
+        protocol = "tcp"
+      }]
     }
   ])
 

@@ -4,4 +4,5 @@ locals {
   cluster_name     = "${var.stage}-${local.application_name}"
   alb_name         = "${var.stage}-${local.application_name}"
   codedeploy_name  = "${var.stage}-${local.application_name}"
+  appconfig_name   = "${var.stage}-${local.application_name}-configuration"
 }
