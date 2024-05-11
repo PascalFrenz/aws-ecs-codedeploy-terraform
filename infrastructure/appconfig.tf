@@ -35,18 +35,3 @@ resource "aws_appconfig_hosted_configuration_version" "health_check" {
     ignore_changes = [content]
   }
 }
-
-import {
-  id = "oe89p38"
-  to = aws_appconfig_application.appconfig
-}
-
-import {
-  id = "xzeqc2v:oe89p38"
-  to = aws_appconfig_configuration_profile.health_check
-}
-
-import {
-  id = "oe89p38/xzeqc2v/1"
-  to = aws_appconfig_hosted_configuration_version.health_check
-}
