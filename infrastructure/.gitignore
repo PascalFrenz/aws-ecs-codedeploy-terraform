@@ -1,5 +1,5 @@
 # Ignore everything by default
-../.idea
+*
 # Keep essential files for the project
 !.gitignore
 !README.md
