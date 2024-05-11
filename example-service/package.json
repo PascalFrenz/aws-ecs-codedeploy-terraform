@@ -1,0 +1,11 @@
+{
+  "name": "example-service",
+  "module": "index.ts",
+  "devDependencies": {
+    "@types/bun": "1.1.1"
+  },
+  "peerDependencies": {
+    "typescript": "5.4.5"
+  },
+  "type": "module"
+}
