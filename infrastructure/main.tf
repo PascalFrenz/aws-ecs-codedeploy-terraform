@@ -124,7 +124,7 @@ resource "aws_lb_listener" "production" {
 
   lifecycle {
     # ignore changes to the default action target group as it changes when a deployment is triggered via CodeDeploy
-    ignore_changes = [default_action.0.forward.0.target_group]
+    ignore_changes = [default_action.0.forward]
   }
 }
 
