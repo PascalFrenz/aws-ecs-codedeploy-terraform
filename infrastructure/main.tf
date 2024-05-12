@@ -200,8 +200,8 @@ resource "aws_ecs_task_definition" "service" {
   container_definitions = jsonencode([
     {
       name           = "webserver"
-      cpu            = 128
-      memory         = 256
+      cpu            = 256
+      memory         = 512
       environment    = []
       mountPoints    = []
       systemControls = []
@@ -213,24 +213,6 @@ resource "aws_ecs_task_definition" "service" {
         hostPort      = local.example_service_port
         protocol      = "tcp"
       }]
-      environment = [
-        {
-          name = "APPLICATION_NAME"
-          value = aws_appconfig_application.appconfig.name
-        },
-        {
-          name = "ENVIRONMENT_NAME"
-          value = aws_appconfig_environment.production.name
-        },
-        {
-          name = "CONFIG_PROFILE_NAME"
-          value = aws_appconfig_configuration_profile.health_check.name
-        },
-        {
-          name = "HEALTH_STATUS_FEATURE_FLAG"
-          value = "isHealthy"
-        }
-      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -239,16 +221,6 @@ resource "aws_ecs_task_definition" "service" {
           awslogs-stream-prefix = "ecs"
         }
       }
-    },
-    {
-      name = "appconfig-sidecar"
-      image = "public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.x"
-      essential = true
-      portMappings = [{
-        containerPort = 2772
-        hostPort = 2772
-        protocol = "tcp"
-      }]
     }
   ])
 
