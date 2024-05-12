@@ -1,16 +1,14 @@
-# example-service
+# Example Service
 
-To install dependencies:
+This is an example service that is used by the infrastructure defined in the [infrastructure](../infrastructure).
+It is published as a docker image on the GitLab Registry of this repository.
 
-```bash
-bun install
-```
+## Usage
 
-To run:
+The service offers two endpoints:
 
-```bash
-bun run index.ts
-```
+* `/health` - returns a 200 if the service is healthy
+* `/health/toggle` - toggles the health status of the service
 
-This project was created using `bun init` in bun v1.1.8. \
-[Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+By default, the service is healthy.
+This can be controlled by setting the `IS_HEALTHY` environment variable to `"false"`.
