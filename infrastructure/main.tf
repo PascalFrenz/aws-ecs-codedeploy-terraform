@@ -133,12 +133,6 @@ resource "aws_lb_listener" "production" {
 # ECS Resources
 #
 # ------------------------------------------------------------------------------
-resource "aws_service_discovery_http_namespace" "service_discovery" {
-  name = local.cluster_name
-
-  tags = {}
-}
-
 resource "aws_cloudwatch_log_group" "service" {
   name              = "/ecs/${local.service_name}"
   retention_in_days = 7
@@ -146,16 +140,6 @@ resource "aws_cloudwatch_log_group" "service" {
 
 resource "aws_ecs_cluster" "cluster" {
   name = local.cluster_name
-
-  configuration {
-    execute_command_configuration {
-      logging = "DEFAULT"
-    }
-  }
-
-  service_connect_defaults {
-    namespace = aws_service_discovery_http_namespace.service_discovery.arn
-  }
 }
 
 resource "aws_ecs_service" "service" {
