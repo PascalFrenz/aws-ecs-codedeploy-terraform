@@ -7,7 +7,7 @@ function isToggleHealthRoute(req: Request) {
 }
 
 const port = 8080;
-let isHealthy: boolean = process.env.IS_HEALTHY === "true" ?? true;
+let isHealthy: boolean = true;
 
 console.log("serving on port " + port);
 Bun.serve({
