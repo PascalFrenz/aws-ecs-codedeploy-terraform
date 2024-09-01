@@ -113,18 +113,34 @@ resource "aws_lb_listener" "production" {
   protocol          = "HTTP"
 
   default_action {
-    type = "forward"
-    forward {
-      target_group {
-        arn    = aws_lb_target_group.blue.arn
-        weight = 100
-      }
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "NOT FOUND"
+      status_code  = "404"
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "service_rule" {
+  listener_arn = aws_lb_listener.production.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.blue.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["*"]
     }
   }
 
   lifecycle {
     # ignore changes to the default action target group as it changes when a deployment is triggered via CodeDeploy
-    ignore_changes = [default_action.0.forward]
+    ignore_changes = [action.0.target_group_arn]
   }
 }
 
@@ -140,6 +156,18 @@ resource "aws_cloudwatch_log_group" "service" {
 
 resource "aws_ecs_cluster" "cluster" {
   name = local.cluster_name
+}
+
+# we are using spot instances in this example to save on costs
+resource "aws_ecs_cluster_capacity_providers" "cluster" {
+  cluster_name       = aws_ecs_cluster.cluster.name
+  capacity_providers = ["FARGATE_SPOT"]
+
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 100
+    base              = 1
+  }
 }
 
 resource "aws_ecs_service" "service" {
@@ -168,8 +196,8 @@ resource "aws_ecs_service" "service" {
   lifecycle {
     ignore_changes = [
       task_definition, # the task definition is changed by the CodeDeploy deployment
-      desired_count, # autoscaling might change the desired count, thus it is ignored here
-      load_balancer  # the load balancer block is changed by the CodeDeploy deployment
+      desired_count,   # autoscaling might change the desired count, thus it is ignored here
+      load_balancer    # the load balancer block is changed by the CodeDeploy deployment
     ]
   }
 }
