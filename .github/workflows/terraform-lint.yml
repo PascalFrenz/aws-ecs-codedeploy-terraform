@@ -1,0 +1,33 @@
+---
+name: Terraform Lint
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "infrastructure/**"
+      - ".github/workflows/terraform-lint.yml"
+
+jobs:
+  terraform-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      - name: Terraform Format
+        id: fmt
+        working-directory: ./infrastructure
+        run: terraform fmt -check -recursive
+      - name: Terraform Init
+        id: init
+        working-directory: ./infrastructure
+        run: terraform init -backend=false
+      - name: Terraform Validate
+        id: validate
+        working-directory: ./infrastructure
+        run: terraform validate -no-color
