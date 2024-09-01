@@ -142,6 +142,18 @@ resource "aws_ecs_cluster" "cluster" {
   name = local.cluster_name
 }
 
+# we are using spot instances in this example to save on costs
+resource "aws_ecs_cluster_capacity_providers" "cluster" {
+  cluster_name = aws_ecs_cluster.cluster.name
+  capacity_providers = ["FARGATE_SPOT"]
+
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 100
+    base              = 1
+  }
+}
+
 resource "aws_ecs_service" "service" {
   name            = local.service_name
   cluster         = aws_ecs_cluster.cluster.id
