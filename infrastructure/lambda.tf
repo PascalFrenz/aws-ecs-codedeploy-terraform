@@ -36,8 +36,8 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 resource "aws_iam_role" "lambda" {
-  name                = "${local.service_name}-lambda"
-  assume_role_policy  = data.aws_iam_policy_document.lambda_assume_role.json
+  name               = "${local.service_name}-lambda"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "lambda" {
@@ -72,12 +72,14 @@ resource "aws_cloudwatch_log_group" "lambda" {
 
 # trigger the lambda function every minute with a specific input
 resource "aws_cloudwatch_event_rule" "lambda" {
+  count               = var.enable_lambda_consumer ? 1 : 0
   name                = "${local.service_name}-lambda-trigger"
   schedule_expression = "rate(1 minute)"
 }
 
 resource "aws_cloudwatch_event_target" "lambda" {
-  rule      = aws_cloudwatch_event_rule.lambda.name
+  count     = var.enable_lambda_consumer ? 1 : 0
+  rule      = aws_cloudwatch_event_rule.lambda[0].name
   target_id = "lambda"
   arn       = aws_lambda_function.lambda.arn
 
@@ -94,10 +96,11 @@ JSON
 }
 
 resource "aws_lambda_permission" "allow_cloudwatch" {
+  count         = var.enable_lambda_consumer ? 1 : 0
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.lambda.arn
+  source_arn    = aws_cloudwatch_event_rule.lambda[0].arn
 }
 

@@ -27,3 +27,9 @@ variable "aws_profile" {
   nullable    = true
   description = "The AWS profile to use to access the AWS API"
 }
+
+variable "enable_lambda_consumer" {
+  type        = bool
+  nullable    = true
+  description = "Whether or not the lambda consumer should automatically make requests to the example service"
+}
