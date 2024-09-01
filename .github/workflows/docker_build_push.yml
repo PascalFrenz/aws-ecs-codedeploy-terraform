@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "example-service/**"
+      - ".github/workflows/docker_build_push.yml"
 
 jobs:
   build-and-push-image:
@@ -25,10 +26,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Get the lowercase repository name (apparently, this is not built in?!)
+      - id: lower-repo
+        name: Convert repository name to lowercase
+        run: |
+          echo "repository=${GITHUB_REPOSITORY@L}" >> $GITHUB_OUTPUT
       # Build and push the Docker image to the GitHub Container Registry
       - name: Build Docker Image
         uses: docker/build-push-action@v4
         with:
           context: ./example-service
           push: true
-          tags: ghcr.io/${{ github.repository }}/webserver:latest
+          tags: ghcr.io/${{ steps.lower-repo.outputs.repository }}/webserver:latest
