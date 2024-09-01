@@ -128,7 +128,7 @@ resource "aws_lb_listener_rule" "service_rule" {
   priority     = 100
 
   action {
-    type = "forward"
+    type             = "forward"
     target_group_arn = aws_lb_target_group.blue.arn
   }
 
@@ -160,7 +160,7 @@ resource "aws_ecs_cluster" "cluster" {
 
 # we are using spot instances in this example to save on costs
 resource "aws_ecs_cluster_capacity_providers" "cluster" {
-  cluster_name = aws_ecs_cluster.cluster.name
+  cluster_name       = aws_ecs_cluster.cluster.name
   capacity_providers = ["FARGATE_SPOT"]
 
   default_capacity_provider_strategy {
@@ -196,8 +196,8 @@ resource "aws_ecs_service" "service" {
   lifecycle {
     ignore_changes = [
       task_definition, # the task definition is changed by the CodeDeploy deployment
-      desired_count, # autoscaling might change the desired count, thus it is ignored here
-      load_balancer  # the load balancer block is changed by the CodeDeploy deployment
+      desired_count,   # autoscaling might change the desired count, thus it is ignored here
+      load_balancer    # the load balancer block is changed by the CodeDeploy deployment
     ]
   }
 }
