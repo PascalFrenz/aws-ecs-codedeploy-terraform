@@ -116,7 +116,7 @@ resource "aws_lb_listener" "production" {
     type = "fixed-response"
 
     fixed_response {
-      content_type = "text/ plain"
+      content_type = "text/plain"
       message_body = "NOT FOUND"
       status_code  = "404"
     }
