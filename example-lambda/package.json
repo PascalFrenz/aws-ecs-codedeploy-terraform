@@ -1,0 +1,17 @@
+{
+  "name": "example-lambda",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@middy/core": "^5.4.6",
+    "@middy/http-json-body-parser": "^5.4.6",
+    "@middy/http-error-handler": "^5.4.6",
+    "@aws-sdk/client-lambda": "^3.637.0"
+  },
+  "peerDependencies": {
+    "typescript": "5.4.5"
+  },
+  "scripts": {
+    "build": "bun build index.ts --target=node --outfile=./build/index.mjs --minify"
+  }
+}
