@@ -113,18 +113,34 @@ resource "aws_lb_listener" "production" {
   protocol          = "HTTP"
 
   default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/ plain"
+      message_body = "NOT FOUND"
+      status_code  = "404"
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "service_rule" {
+  listener_arn = aws_lb_listener.production.arn
+  priority     = 100
+
+  action {
     type = "forward"
-    forward {
-      target_group {
-        arn    = aws_lb_target_group.blue.arn
-        weight = 100
-      }
+    target_group_arn = aws_lb_target_group.blue.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["*"]
     }
   }
 
   lifecycle {
     # ignore changes to the default action target group as it changes when a deployment is triggered via CodeDeploy
-    ignore_changes = [default_action.0.forward]
+    ignore_changes = [action.0.target_group_arn]
   }
 }
 
