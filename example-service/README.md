@@ -1,7 +1,7 @@
 # Example Service
 
 This is an example service that is used by the infrastructure defined in the [infrastructure](../infrastructure).
-It is published as a docker image on the GitLab Registry of this repository.
+It is published as a docker image on the GitHub Registry of this repository.
 
 ## Usage
 
