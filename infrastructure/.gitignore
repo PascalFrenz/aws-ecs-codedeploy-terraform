@@ -14,3 +14,12 @@
 !*.tf
 !.terraform.lock.hcl
 
+# Keep terraform files in modules
+!modules
+!modules/lambda
+!modules/ecs
+!modules/shared
+!modules/ecs/*.tf
+!modules/lambda/*.tf
+!modules/shared/*.tf
+
