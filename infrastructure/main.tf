@@ -1,5 +1,50 @@
 # ------------------------------------------------------------------------------
 #
+# Shared Resources
+#
+# ------------------------------------------------------------------------------
+module "shared" {
+  source         = "./modules/shared"
+  alb_name       = local.alb_name
+  public_subnets = var.public_subnets
+}
+
+# ------------------------------------------------------------------------------
+#
+# ECS Resources
+#
+# ------------------------------------------------------------------------------
+module "ecs" {
+  source       = "./modules/ecs"
+  cluster_name = local.cluster_name
+  service_name = local.service_name
+
+  example_service_docker_image = local.example_service_docker_image
+  example_service_port         = local.example_service_port
+
+  alb_security_group_id = module.shared.alb_security_group_id
+
+  alb_name              = local.alb_name
+  alb_target_group_arn  = aws_lb_target_group.blue.arn
+  alb_http_listener_arn = module.shared.alb_http_listener_arn
+  public_subnets        = var.public_subnets
+  region                = var.region
+}
+
+# ------------------------------------------------------------------------------
+#
+# Lambda Resources
+#
+# ------------------------------------------------------------------------------
+module "lambda" {
+  source                 = "./modules/lambda"
+  service_name           = local.service_name
+  service_base_url       = "http://${module.shared.alb_dns_name}"
+  enable_lambda_consumer = var.enable_lambda_consumer
+}
+
+# ------------------------------------------------------------------------------
+#
 # CodeDeploy Resources
 #
 # ------------------------------------------------------------------------------
@@ -36,14 +81,14 @@ resource "aws_codedeploy_deployment_group" "app" {
   }
 
   ecs_service {
-    cluster_name = aws_ecs_cluster.cluster.name
-    service_name = aws_ecs_service.service.name
+    cluster_name = module.ecs.cluster_name
+    service_name = module.ecs.service_name
   }
 
   load_balancer_info {
     target_group_pair_info {
       prod_traffic_route {
-        listener_arns = [aws_lb_listener.production.arn]
+        listener_arns = [module.shared.alb_http_listener_arn]
       }
       target_group {
         name = aws_lb_target_group.blue.name
@@ -56,17 +101,22 @@ resource "aws_codedeploy_deployment_group" "app" {
   }
 }
 
-# ------------------------------------------------------------------------------
-#
-# Load Balancer
-#
-# ------------------------------------------------------------------------------
-resource "aws_lb" "alb" {
-  name               = local.alb_name
-  internal           = false
-  load_balancer_type = "application"
-  subnets            = var.public_subnets
-  security_groups    = [aws_security_group.lb.id]
+resource "aws_iam_role" "codedeploy_service_role" {
+  name = "${local.codedeploy_name}-service-role"
+
+  assume_role_policy  = data.aws_iam_policy_document.codedeploy_assume_role.json
+  managed_policy_arns = ["arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"]
+}
+
+data "aws_iam_policy_document" "codedeploy_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["codedeploy.amazonaws.com"]
+    }
+  }
 }
 
 resource "aws_lb_target_group" "blue" {
@@ -106,138 +156,3 @@ resource "aws_lb_target_group" "green" {
     unhealthy_threshold = 2
   }
 }
-
-resource "aws_lb_listener" "production" {
-  load_balancer_arn = aws_lb.alb.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type = "fixed-response"
-
-    fixed_response {
-      content_type = "text/plain"
-      message_body = "NOT FOUND"
-      status_code  = "404"
-    }
-  }
-}
-
-resource "aws_lb_listener_rule" "service_rule" {
-  listener_arn = aws_lb_listener.production.arn
-  priority     = 100
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.blue.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["*"]
-    }
-  }
-
-  lifecycle {
-    # ignore changes to the default action target group as it changes when a deployment is triggered via CodeDeploy
-    ignore_changes = [action.0.target_group_arn]
-  }
-}
-
-# ------------------------------------------------------------------------------
-#
-# ECS Resources
-#
-# ------------------------------------------------------------------------------
-resource "aws_cloudwatch_log_group" "service" {
-  name              = "/ecs/${local.service_name}"
-  retention_in_days = 7
-}
-
-resource "aws_ecs_cluster" "cluster" {
-  name = local.cluster_name
-}
-
-# we are using spot instances in this example to save on costs
-resource "aws_ecs_cluster_capacity_providers" "cluster" {
-  cluster_name       = aws_ecs_cluster.cluster.name
-  capacity_providers = ["FARGATE_SPOT"]
-
-  default_capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
-    weight            = 100
-    base              = 1
-  }
-}
-
-resource "aws_ecs_service" "service" {
-  name            = local.service_name
-  cluster         = aws_ecs_cluster.cluster.id
-  launch_type     = "FARGATE"
-  desired_count   = 1
-  task_definition = aws_ecs_task_definition.service.arn
-
-  deployment_controller {
-    type = "CODE_DEPLOY"
-  }
-
-  network_configuration {
-    subnets          = var.public_subnets
-    security_groups  = [aws_security_group.service.id]
-    assign_public_ip = true
-  }
-
-  load_balancer {
-    container_name   = "webserver"
-    container_port   = local.example_service_port
-    target_group_arn = aws_lb_target_group.blue.arn
-  }
-
-  lifecycle {
-    ignore_changes = [
-      task_definition, # the task definition is changed by the CodeDeploy deployment
-      desired_count,   # autoscaling might change the desired count, thus it is ignored here
-      load_balancer    # the load balancer block is changed by the CodeDeploy deployment
-    ]
-  }
-}
-
-resource "aws_ecs_task_definition" "service" {
-  family                   = local.service_name
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = 256
-  memory                   = 512
-  execution_role_arn       = aws_iam_role.service_execution_role.arn
-  container_definitions = jsonencode([
-    {
-      name           = "webserver"
-      cpu            = 256
-      memory         = 512
-      environment    = []
-      mountPoints    = []
-      systemControls = []
-      volumesFrom    = []
-      essential      = true
-      image          = local.example_service_docker_image
-      portMappings = [{
-        containerPort = local.example_service_port
-        hostPort      = local.example_service_port
-        protocol      = "tcp"
-      }]
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.service.name
-          awslogs-region        = var.region
-          awslogs-stream-prefix = "ecs"
-        }
-      }
-    }
-  ])
-
-  runtime_platform {
-    operating_system_family = "LINUX"
-  }
-}
-

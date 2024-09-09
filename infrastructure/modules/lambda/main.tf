@@ -2,12 +2,12 @@ data "aws_region" "current" {}
 
 data "archive_file" "lambda" {
   type        = "zip"
-  source_file = "${path.module}/../example-lambda/build/index.mjs"
+  source_file = "${path.cwd}/../example-lambda/build/index.mjs"
   output_path = "lambda_function.zip"
 }
 
 resource "aws_lambda_function" "lambda" {
-  function_name    = "${local.service_name}-consumer"
+  function_name    = "${var.service_name}-consumer"
   role             = aws_iam_role.lambda.arn
   runtime          = "nodejs20.x"
   handler          = "index.handler"
@@ -19,7 +19,7 @@ resource "aws_lambda_function" "lambda" {
 
   environment {
     variables = {
-      SERVICE_BASE_URL = "http://${aws_lb.alb.dns_name}"
+      SERVICE_BASE_URL = var.service_base_url
     }
   }
 }
@@ -36,7 +36,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 resource "aws_iam_role" "lambda" {
-  name               = "${local.service_name}-lambda"
+  name               = "${var.service_name}-lambda"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
@@ -51,7 +51,7 @@ resource "aws_iam_role_policy_attachment" "lambda_allow_lambda_execution" {
 }
 
 resource "aws_iam_policy" "lambda_allow_lambda_execution" {
-  name   = "${local.service_name}-lambda-allow-lambda-execution"
+  name   = "${var.service_name}-lambda-allow-lambda-execution"
   policy = data.aws_iam_policy_document.lambda_allow_lambda_execution.json
 }
 
@@ -73,7 +73,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
 # trigger the lambda function every minute with a specific input
 resource "aws_cloudwatch_event_rule" "lambda" {
   count               = var.enable_lambda_consumer ? 1 : 0
-  name                = "${local.service_name}-lambda-trigger"
+  name                = "${var.service_name}-lambda-trigger"
   schedule_expression = "rate(1 minute)"
 }
 
