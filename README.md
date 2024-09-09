@@ -30,6 +30,16 @@ Resources:
 Once you are done testing, you can destroy the infrastructure with Terraform to prevent incurring more cost.
 See here for how to do that: [Infrastructure Destruction](./infrastructure/README.md#destroying-the-infrastructure).
 
+## Testing various scenarios
+
+The [example service](./example-service) can be used to test various scenarios and how CodeDeploy
+reacts to them.
+
+By default, the service is healthy. This can be toggled by calling the `/health/toggle` endpoint.
+To test the service under load, the [example-lambda](./example-lambda) can used to call the health
+endpoint of the service automatically. The call-rate can also be configured. Note that higher call
+rates might result in higher costs.
+
 ## Reference Resources
 
 * [AWS CodeDeploy with ECS](https://docs.aws.amazon.com/codedeploy/latest/userguide/tutorial-ecs-deployment.html)
